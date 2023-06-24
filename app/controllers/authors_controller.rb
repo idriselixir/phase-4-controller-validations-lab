@@ -1,21 +1,25 @@
 class AuthorsController < ApplicationController
-  
+  rescue_from ActiveRecord::RecordNotFound, with: :render_not_found_response
+  rescue_from ActiveRecord::RecordInvalid, with: :render_unprocessable_entity_response
+
   def show
     author = Author.find(params[:id])
-
     render json: author
   end
 
   def create
-    author = Author.create(author_params)
+    author = Author.new(author_params)
 
-    render json: author, status: :created
+    if author.save
+      render json: author, status: :created
+    else
+      render json: { errors: author.errors.full_messages }, status: :unprocessable_entity
+    end
   end
 
   private
   
   def author_params
-    params.permit(:email, :name)
+    params.require(:author).permit(:email, :name)
   end
-  
 end
